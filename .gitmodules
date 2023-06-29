@@ -1,0 +1,3 @@
+[submodule "matrix-simp"]
+	path = matrix-simp
+	url = https://github.com/UlascanErsoy/matrix-simp.git
