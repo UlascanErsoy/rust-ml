@@ -4,18 +4,11 @@ use matrix_simp::Matrix;
 
 #[derive(Debug, serde::Deserialize)]
 struct Candidate {
-    years_of_experience:f32,
-    functional_competency_score:f32,
-    top1_skills_score:f32,
-    top2_skills_score:f32,
-    top3_skills_score:f32,
-    behavior_competency_score:f32,
-    top1_behavior_skill_score:f32,
-    top2_behavior_skill_score:f32,
-    top3_behavior_skill_score:f32,
-    call_for_interview:f32
-
+    first_exam: f32,
+    second_exam: f32,
+    pass: f32,
 }
+
 fn read_csv(path: String) -> Result<(Matrix<f32>, Matrix<f32>) , Box<dyn Error>> {
     let file = File::open(path).unwrap();
     let mut rdr = csv::Reader::from_reader(file);
@@ -28,25 +21,18 @@ fn read_csv(path: String) -> Result<(Matrix<f32>, Matrix<f32>) , Box<dyn Error>>
         
         data.push(vec![
                     1_f32,
-                    candidate.top3_skills_score,
-                    candidate.top2_skills_score,
-                    candidate.years_of_experience,
-                    candidate.functional_competency_score,
-                    candidate.top1_skills_score,
-                    candidate.behavior_competency_score,
-                    candidate.top1_behavior_skill_score,
-                    candidate.top2_behavior_skill_score,
-                    candidate.top3_behavior_skill_score
+                    candidate.first_exam,
+                    candidate.second_exam,
         ]);
 
-        res.push(vec![candidate.call_for_interview]);
+        res.push(vec![candidate.pass]);
     }
     
     Ok((Matrix::from(data), Matrix::from(res)))
 }
 
 fn init_hypothesis(features: usize) -> Matrix<f32> {
-   Matrix::new(1_f32, features, 1) 
+   Matrix::new(0.5_f32, features, 1) 
 }
 
 fn apply_learning<'a>(alpha: f32,
@@ -57,6 +43,7 @@ fn apply_learning<'a>(alpha: f32,
     let res = result.clone();
     let mut cost: Vec<f32> = vec![0_f32; inputs.m];
 
+    println!("Inputs: {}", inputs);
 
     for idx in 0..inputs.n {
         let data: Vec<Vec<f32>> = vec![Vec::from(inputs.get_row(idx))];
@@ -100,18 +87,18 @@ fn predict(inputs: Matrix<f32>, theta: Matrix<f32>) -> Matrix<f32> {
 
 fn main() {
     
-    let (inputs, output) = read_csv(String::from("../data/hr/train.csv")).unwrap();
+    let (inputs, output) = read_csv(String::from("../data/2d-class/train.csv")).unwrap();
 
     let mut theta = init_hypothesis(inputs.m);
 
     for _ in 0..1000 {
-        apply_learning(0.01_f32, inputs.clone(), &mut theta, &output);
+        apply_learning(0.001_f32, inputs.clone(), &mut theta, &output);
     }
     
     
     println!("Theta: {:?}", theta);
 
-    let (v_in, v_out) = read_csv(String::from("../data/hr/test.csv")).unwrap();
+    let (v_in, v_out) = read_csv(String::from("../data/2d-class/validate.csv")).unwrap();
     let prediction = predict(v_in, theta);
     let correct = prediction.get_row(0)
                             .iter()
